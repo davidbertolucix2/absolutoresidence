@@ -99,7 +99,7 @@ export function Landing() {
             <Link to="/entrar" className="hidden text-[13px] font-medium text-[color:var(--ov-cream)]/70 hover:text-[color:var(--ov-cream)] sm:inline">
               Área do corretor
             </Link>
-            <Link to="/membros/propostas" className="ov-btn ov-btn-gold hidden !py-2.5 text-sm sm:inline-flex">
+            <Link to="/membros/propostas" className="ov-btn ov-btn-gold whitespace-nowrap !px-4 !py-2 text-xs sm:!px-5 sm:!py-2.5 sm:text-sm">
               Fazer proposta
             </Link>
             <button type="button" className="ab-icon-btn lg:hidden" onClick={() => setMenu(true)} aria-label="Abrir menu">
