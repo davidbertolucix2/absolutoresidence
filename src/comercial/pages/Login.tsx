@@ -47,10 +47,10 @@ export function LoginPage() {
       <div className="ab-auth-photo" aria-hidden="true" />
       <div className="relative z-10 grid min-h-dvh place-items-center px-5 py-10">
         <form className="ov-card ab-glass w-full max-w-md p-7 sm:p-8" onSubmit={submit}>
-          <Link to="/" aria-label="Voltar ao site">
+          <Link to="/" aria-label="Voltar ao site" className="inline-block">
             <Wordmark />
           </Link>
-          <p className="ov-kicker mt-7">Área do corretor</p>
+          <p className="ov-kicker mt-7 !flex">Área do corretor</p>
           <h1 className="ov-serif mt-3 text-3xl">{mode === 'entrar' ? 'Bem-vindo de volta' : 'Crie seu acesso'}</h1>
           <p className="mt-3 text-sm text-[color:var(--ov-muted)]">
             {mode === 'entrar'
