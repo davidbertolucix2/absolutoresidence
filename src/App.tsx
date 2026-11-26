@@ -15,7 +15,7 @@ import { MembersProposals } from './comercial/pages/members/Proposals';
 import { MembersUnits } from './comercial/pages/members/Units';
 import { MembersRanking } from './comercial/pages/members/Ranking';
 import { MembersAccount } from './comercial/pages/members/Account';
-import { Landing } from './Landing';
+import { HomePage, LazerPage, LocalizacaoPage, ProjetoPage, UnidadesPage } from './Landing';
 
 function ScrollManager() {
   const { pathname, hash } = useLocation();
@@ -37,7 +37,11 @@ export default function App() {
         <StoreProvider>
           <ScrollManager />
           <Routes>
-            <Route path="/" element={<Landing />} />
+            <Route path="/" element={<HomePage />} />
+            <Route path="/projeto" element={<ProjetoPage />} />
+            <Route path="/lazer" element={<LazerPage />} />
+            <Route path="/unidades" element={<UnidadesPage />} />
+            <Route path="/localizacao" element={<LocalizacaoPage />} />
             <Route path="/entrar" element={<LoginPage />} />
             <Route path="/proposta" element={<Navigate to="/membros/propostas" replace />} />
             <Route path="/admin" element={<AdminGate />}>

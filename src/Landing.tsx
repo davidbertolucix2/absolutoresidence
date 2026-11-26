@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { motion, useScroll, useSpring, useTransform, type MotionValue } from 'framer-motion';
-import { ArrowDown, ArrowUpRight, Calendar, MapPin, Menu, X } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpRight, Calendar, MapPin, Menu, X } from 'lucide-react';
 import { Wordmark } from './comercial/chrome';
 import { FloorPicker } from './landing/FloorPicker';
 import { UnitDrawer } from './landing/UnitDrawer';
@@ -22,12 +22,14 @@ import {
 const proposeHref = (unit: Unit) => `/membros/propostas?unidade=${unit.id}`;
 
 const NAV = [
-  { href: '#conceito', label: 'Conceito' },
-  { href: '#lazer', label: 'Lazer' },
-  { href: '#unidades', label: 'Escolha sua unidade' },
-  { href: '#tabela', label: 'Tabela' },
-  { href: '#localizacao', label: 'Localização' },
+  { to: '/projeto', label: 'O projeto' },
+  { to: '/lazer', label: 'Lazer' },
+  { to: '/unidades', label: 'Unidades e tabela' },
+  { to: '/localizacao', label: 'Localização' },
 ];
+
+/** Vídeos gerados (Kling). Deixe vazio para usar só a imagem. */
+const HERO_VIDEO = '';
 
 const AMENITIES = [
   'Piscina adulto com raia integrada',
@@ -65,17 +67,19 @@ const TYPOLOGIES: { kind: UnitKind; img: string; area: string; text: string }[] 
   { kind: 'loft', img: '/img/loft-interior.jpg', area: '50 a 70 m²', text: 'Pé-direito duplo com mezanino, no 11º pavimento. Só cinco disponíveis.' },
 ];
 
-export function Landing() {
+export function SiteLayout({ children, title }: { children: ReactNode; title: string }) {
   const [scrolled, setScrolled] = useState(false);
   const [menu, setMenu] = useState(false);
+  const { pathname } = useLocation();
 
   useEffect(() => {
-    document.title = 'Absoluto Residence — Porto Belo/SC · Estilo neoclássico';
+    document.title = title;
+    setMenu(false);
     const onScroll = () => setScrolled(window.scrollY > 40);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [title, pathname]);
 
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 30 });
@@ -83,16 +87,16 @@ export function Landing() {
   return (
     <div className="ab-site">
       <motion.div className="ab-progress" style={{ scaleX: progress }} />
-      <header className={`ov-nav ${scrolled ? 'is-scrolled' : ''}`}>
+      <header className={`ov-nav ${scrolled || pathname !== '/' ? 'is-scrolled' : ''}`}>
         <div className="ov-wrap flex h-[72px] items-center justify-between gap-4">
-          <a href="#topo" aria-label="Absoluto Residence — início">
+          <Link to="/" aria-label="Absoluto Residence — início">
             <Wordmark />
-          </a>
+          </Link>
           <nav className="hidden items-center gap-7 text-[13px] font-medium tracking-wide text-[color:var(--ov-cream)]/80 lg:flex">
             {NAV.map((item) => (
-              <a key={item.href} href={item.href} className="ab-navlink">
+              <NavLink key={item.to} to={item.to} className={({ isActive }) => `ab-navlink ${isActive ? 'is-active' : ''}`}>
                 {item.label}
-              </a>
+              </NavLink>
             ))}
           </nav>
           <div className="flex items-center gap-2">
@@ -112,47 +116,222 @@ export function Landing() {
       {menu ? (
         <div className="ab-menu">
           <div className="ov-wrap flex h-[72px] items-center justify-between">
-            <Wordmark />
+            <Link to="/">
+              <Wordmark />
+            </Link>
             <button type="button" className="ab-icon-btn" onClick={() => setMenu(false)} aria-label="Fechar menu">
               <X size={18} />
             </button>
           </div>
           <nav className="ov-wrap mt-6 flex flex-col">
-            {NAV.map((item, i) => (
-              <motion.a
-                key={item.href}
-                href={item.href}
-                onClick={() => setMenu(false)}
-                className="ov-serif border-b border-[color:var(--ov-line)] py-4 text-3xl"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 * i }}
-              >
-                {item.label}
-              </motion.a>
+            {[{ to: '/', label: 'Início' }, ...NAV].map((item, i) => (
+              <motion.div key={item.to} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 * i }}>
+                <Link to={item.to} className="ov-serif block border-b border-[color:var(--ov-line)] py-4 text-3xl">
+                  {item.label}
+                </Link>
+              </motion.div>
             ))}
-            <Link to="/membros/propostas" className="ov-btn ov-btn-gold mt-8" onClick={() => setMenu(false)}>
+            <Link to="/membros/propostas" className="ov-btn ov-btn-gold mt-8">
               Fazer proposta
             </Link>
-            <Link to="/entrar" className="ov-btn ov-btn-ghost mt-3" onClick={() => setMenu(false)}>
+            <Link to="/entrar" className="ov-btn ov-btn-ghost mt-3">
               Área do corretor
             </Link>
           </nav>
         </div>
       ) : null}
 
-      <main id="topo">
-        <Hero />
-        <Concept />
-        <Amenities />
-        <Picker />
-        <Typologies />
-        <PriceTable />
-        <Location />
-        <Closing />
-      </main>
+      <motion.main key={pathname} id="topo" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+        {children}
+      </motion.main>
       <Footer />
     </div>
+  );
+}
+
+/* --------------------------------- PÁGINAS -------------------------------- */
+
+export function HomePage() {
+  return (
+    <SiteLayout title="Absoluto Residence — Porto Belo/SC · Estilo neoclássico">
+      <Hero />
+      <HomeIntro />
+      <ZoomReveal src="/img/hero-noturna.jpg" kicker="A fachada" title="Neoclássico ao anoitecer." text="Colunas, cornijas e iluminação cênica: um edifício pensado para ser lembrado." />
+      <Explore />
+      <Closing />
+    </SiteLayout>
+  );
+}
+
+export function ProjetoPage() {
+  return (
+    <SiteLayout title="O projeto — Absoluto Residence">
+      <PageHero img="/img/fachada-frontal.jpg" kicker="O projeto" title="O clássico que permanece." text="Arquitetura neoclássica, três tipologias e lazer de resort a poucos minutos do mar." />
+      <Concept />
+      <Typologies />
+      <NextPage to="/lazer" label="Lazer de resort" img="/img/piscina.jpg" />
+    </SiteLayout>
+  );
+}
+
+export function LazerPage() {
+  return (
+    <SiteLayout title="Lazer — Absoluto Residence">
+      <PageHero img="/img/piscina.jpg" kicker="Lazer de resort" title="Viver bem, sem sair de casa." text="Mais de 20 itens de lazer, da piscina com raia ao pizza wine bar." />
+      <ZoomReveal src="/img/bangalos.jpg" kicker="Deck solarium" title="Bangalôs para desacelerar." text="Daybeds com cortinas de linho, prainha e bar molhado." />
+      <Amenities />
+      <NextPage to="/unidades" label="Escolha sua unidade" img="/img/loft-interior.jpg" />
+    </SiteLayout>
+  );
+}
+
+export function UnidadesPage() {
+  return (
+    <SiteLayout title="Unidades e tabela — Absoluto Residence">
+      <PageHero img="/img/loft-interior.jpg" kicker={`Tabela de ${TABLE_DATE}`} title="Escolha o andar. Toque na unidade." text="Planta, área, box, valor de tabela e simulação de pagamento de cada unidade disponível." compact />
+      <Picker />
+      <PriceTable />
+      <NextPage to="/localizacao" label="Localização" img="/img/localizacao-aerea.jpg" />
+    </SiteLayout>
+  );
+}
+
+export function LocalizacaoPage() {
+  return (
+    <SiteLayout title="Localização — Absoluto Residence">
+      <PageHero img="/img/localizacao-aerea.jpg" kicker="Localização" title="Porto Belo, entre o mar e a serra." text="Acesso rápido à BR-101, às praias de Porto Belo e Bombinhas, a Itapema e a Balneário Camboriú." />
+      <Location />
+      <Closing />
+    </SiteLayout>
+  );
+}
+
+/* ------------------------------ BLOCOS NOVOS ------------------------------ */
+
+function PageHero({ img, kicker, title, text, compact = false }: { img: string; kicker: string; title: string; text: string; compact?: boolean }) {
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
+  const y = useTransform(scrollYProgress, [0, 1], ['0%', '22%']);
+  const fade = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  return (
+    <section ref={ref} className={`ab-page-hero ${compact ? 'is-compact' : ''}`}>
+      <motion.div className="ab-page-hero-media" style={{ y }}>
+        <motion.img src={img} alt="" initial={{ scale: 1.18 }} animate={{ scale: 1.04 }} transition={{ duration: 2.4, ease: [0.16, 1, 0.3, 1] }} />
+      </motion.div>
+      <div className="ab-hero-shade" />
+      <motion.div className="ov-wrap relative z-10" style={{ opacity: fade }}>
+        <motion.p className="ov-kicker" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.8 }}>
+          {kicker}
+        </motion.p>
+        <h1 className="ov-serif mt-4 max-w-4xl text-5xl leading-[1.02] sm:text-7xl">
+          <span className="ab-line">
+            <motion.span initial={{ y: '110%' }} animate={{ y: 0 }} transition={{ delay: 0.3, duration: 1.1, ease: [0.16, 1, 0.3, 1] }}>
+              {title}
+            </motion.span>
+          </span>
+        </h1>
+        <motion.p className="mt-5 max-w-xl text-[color:var(--ov-cream)]/80" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.9 }}>
+          {text}
+        </motion.p>
+      </motion.div>
+    </section>
+  );
+}
+
+/** Efeito de aproximação: a imagem começa como um quadro pequeno e cresce até ocupar a tela. */
+function ZoomReveal({ src, kicker, title, text }: { src: string; kicker: string; title: string; text: string }) {
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] });
+  const clip = useTransform(scrollYProgress, [0, 0.6], ['inset(22% 30% 22% 30% round 28px)', 'inset(0% 0% 0% 0% round 0px)']);
+  const scale = useTransform(scrollYProgress, [0, 1], [1.35, 1]);
+  const textOpacity = useTransform(scrollYProgress, [0.45, 0.7], [0, 1]);
+  const textY = useTransform(scrollYProgress, [0.45, 0.7], [40, 0]);
+  return (
+    <section ref={ref} className="ab-zoomreveal">
+      <div className="ab-zoomreveal-sticky">
+        <motion.div className="ab-zoomreveal-frame" style={{ clipPath: clip }}>
+          <motion.img src={src} alt={title} style={{ scale }} loading="lazy" />
+          <div className="ab-zoomreveal-shade" />
+        </motion.div>
+        <motion.div className="ov-wrap ab-zoomreveal-text" style={{ opacity: textOpacity, y: textY }}>
+          <p className="ov-kicker">{kicker}</p>
+          <h2 className="ov-serif mt-3 max-w-3xl text-4xl sm:text-6xl">{title}</h2>
+          <p className="mt-4 max-w-lg text-[color:var(--ov-cream)]/80">{text}</p>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function HomeIntro() {
+  return (
+    <section id="conceito" className="ab-section">
+      <div className="ov-wrap">
+        <Reveal>
+          <p className="ov-kicker">O conceito</p>
+        </Reveal>
+        <WordsReveal text="Colunas, frontões e cornijas que atravessam o tempo. Um edifício que não segue tendência: ele fica." />
+        <Reveal>
+          <Link to="/projeto" className="ov-btn ov-btn-ghost mt-10">
+            Conhecer o projeto <ArrowRight size={16} />
+          </Link>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+const EXPLORE = [
+  { to: '/projeto', label: 'O projeto', text: 'Conceito, números e tipologias', img: '/img/fachada-frontal.jpg' },
+  { to: '/lazer', label: 'Lazer', text: 'Piscina, bangalôs, academia e mais', img: '/img/piscina.jpg' },
+  { to: '/unidades', label: 'Unidades e tabela', text: 'Escolha o andar e a unidade', img: '/img/loft-interior.jpg' },
+  { to: '/localizacao', label: 'Localização', text: 'Porto Belo, perto do mar', img: '/img/localizacao-aerea.jpg' },
+];
+
+function Explore() {
+  return (
+    <section className="ab-section">
+      <div className="ov-wrap">
+        <Reveal>
+          <p className="ov-kicker">Explore</p>
+          <h2 className="ov-serif mt-3 text-4xl sm:text-6xl">Conheça o Absoluto por partes.</h2>
+        </Reveal>
+        <div className="ab-explore mt-12">
+          {EXPLORE.map((item, i) => (
+            <Reveal key={item.to} delay={i * 0.08}>
+              <Link to={item.to} className="ab-explore-card">
+                <img src={item.img} alt="" loading="lazy" />
+                <span className="ab-explore-shade" />
+                <span className="ab-explore-text">
+                  <small>0{i + 1}</small>
+                  <strong className="ov-serif">{item.label}</strong>
+                  <em>{item.text}</em>
+                </span>
+                <ArrowUpRight className="ab-explore-arrow" size={20} />
+              </Link>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function NextPage({ to, label, img }: { to: string; label: string; img: string }) {
+  return (
+    <section className="ab-section !pt-0">
+      <div className="ov-wrap">
+        <Link to={to} className="ab-next">
+          <img src={img} alt="" loading="lazy" />
+          <span className="ab-explore-shade" />
+          <span className="ab-next-text">
+            <small>Próxima página</small>
+            <strong className="ov-serif">{label}</strong>
+          </span>
+          <ArrowRight className="ab-explore-arrow" size={22} />
+        </Link>
+      </div>
+    </section>
   );
 }
 
@@ -169,7 +348,11 @@ function Hero() {
   return (
     <section ref={ref} className="ab-hero" aria-label="Absoluto Residence">
       <motion.div className="ab-hero-media" style={{ y, scale }}>
-        <img src="/img/hero-noturna.jpg" alt="Fachada noturna do Absoluto Residence" fetchPriority="high" />
+        {HERO_VIDEO ? (
+          <video src={HERO_VIDEO} poster="/img/hero-noturna.jpg" autoPlay muted loop playsInline />
+        ) : (
+          <img src="/img/hero-noturna.jpg" alt="Fachada noturna do Absoluto Residence" fetchPriority="high" />
+        )}
       </motion.div>
       <div className="ab-hero-shade" />
       <motion.div className="ov-wrap ab-hero-content" style={{ opacity: fade, y: lift }}>
@@ -198,9 +381,9 @@ function Hero() {
           Absoluto Residence. Arquitetura neoclássica, lazer de resort e studios, apartamentos e lofts a poucos minutos do mar. Em até 72× direto com a construtora.
         </motion.p>
         <motion.div className="mt-8 flex flex-wrap gap-3" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1, duration: 0.9 }}>
-          <a href="#unidades" className="ov-btn ov-btn-gold">
+          <Link to="/unidades" className="ov-btn ov-btn-gold">
             Escolher minha unidade
-          </a>
+          </Link>
           <Link to="/membros/propostas" className="ov-btn ov-btn-ghost">
             Fazer proposta <ArrowUpRight size={16} />
           </Link>
@@ -285,7 +468,7 @@ function Word({ children, progress, range }: { children: string; progress: Motio
 
 function Concept() {
   return (
-    <section id="conceito" className="ab-section">
+    <section className="ab-section">
       <div className="ov-wrap">
         <Reveal>
           <p className="ov-kicker">O conceito</p>
